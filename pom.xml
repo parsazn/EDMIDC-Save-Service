@@ -14,7 +14,7 @@
     <name>EDMIDC-Save-Service</name>
     <description>EDMIDC-Save-Service</description>
     <properties>
-        <java.version>22</java.version>
+        <java.version>19</java.version>
     </properties>
     <dependencies>
         <dependency>
@@ -53,8 +53,8 @@
         <!-- https://mvnrepository.com/artifact/com.influxdb/influxdb-spring -->
         <dependency>
             <groupId>com.influxdb</groupId>
-            <artifactId>influxdb-spring</artifactId>
-            <version>7.0.0</version>
+            <artifactId>influxdb-client-java</artifactId>
+            <version>4.0.0</version>
         </dependency>
     </dependencies>
 
