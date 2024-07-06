@@ -88,6 +88,12 @@ services:
       - DOCKER_INFLUXDB_INIT_BUCKET=my-bucket
       - DOCKER_INFLUXDB_INIT_RETENTION=0
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-super-secret-auth-token
+      - DOCKER_INFLUXDB_INIT_CLI_CONFIG_NAME=myconfig
+    healthcheck:
+      test: [ "CMD", "curl", "-f" , "http://localhost:8086/ping" ]
+      interval: 1m
+      timeout: 10s
+      retries: 5
     restart: unless-stopped
     networks:
       - my_network
@@ -103,6 +109,11 @@ services:
       - '5432:5432'
     volumes:
       - db:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-d", "db_prod" ]
+      interval: 30s
+      timeout: 60s
+      retries: 5
     networks:
       - my_network
     container_name: coreDB
