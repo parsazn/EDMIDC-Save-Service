@@ -17,12 +17,13 @@ public class MessageConsumer {
 
     @KafkaListener(topics = "edmidc-bitcoin-cdc" , groupId = "group_iid")
     public void listen(String message) {
-        ObjectMapper objectMapper = new ObjectMapper();
-
         try {
-            JsonNode rootNode = objectMapper.readTree(message);
-            savingService.save(rootNode);
-            System.out.println("HashMap: " + rootNode);
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode matrix = mapper.readValue(message, JsonNode.class);
+            System.out.println("HashMap: " + message);
+            matrix.forEach(node ->
+                savingService.save(node)
+            );
         } catch (IOException e) {
            throw new RuntimeException("Unable to consumer message : " + message + "\n due to : " + e);
         }
