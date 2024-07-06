@@ -18,9 +18,9 @@ import java.time.Instant;
 public class SavingService {
 
     //TODO take token automatically
-    private static char[] token = "qWrHmLNor5vcAGTeUqf57H98l1p6D1kDkAtXdOBlS0mQ235iKO0k_Gcpinjy0EqlMnIhwoZNcwSXm_WLxEDQtg==".toCharArray();
-    private static String org = "admin";
-    private static String bucket = "admin";
+    private static char[] token = "my-super-secret-auth-token".toCharArray();
+    private static String org = "my-org";
+    private static String bucket = "my-bucket";
 
     public void save(JsonNode node) {
 
