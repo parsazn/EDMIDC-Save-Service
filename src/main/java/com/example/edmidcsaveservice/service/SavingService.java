@@ -1,7 +1,9 @@
 package com.example.edmidcsaveservice.service;
 
+import com.example.edmidcsaveservice.configuration.InfluxDBConfig;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
@@ -9,6 +11,7 @@ import com.influxdb.client.WriteApiBlocking;
 import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -17,44 +20,73 @@ import java.time.Instant;
 @Service
 public class SavingService {
 
-    //TODO take token automatically
-    private static char[] token = "my-super-secret-auth-token".toCharArray();
-    private static String org = "my-org";
-    private static String bucket = "my-bucket";
+    private final char[] token;
+    private final String org;
+    private final String bucket;
+    private final String url;
 
-    public void save(JsonNode node) {
+    @Autowired
+    public SavingService(InfluxDBConfig influxDBConfig) {
+        this.token = influxDBConfig.getToken().toCharArray();
+        this.org = influxDBConfig.getOrg();
+        this.bucket = influxDBConfig.getBucket();
+        this.url = influxDBConfig.getUrl();
+    }
 
-        InfluxDBClient influxDBClient = InfluxDBClientFactory.create("http://localhost:8086", token, org, bucket);
+    public void save(String node , String tag , String measurementName) throws JsonProcessingException {
+
+        InfluxDBClient influxDBClient = InfluxDBClientFactory.create(url, token, org, bucket);
         WriteApiBlocking writeApi = influxDBClient.getWriteApiBlocking();
 
-        Point point = Point.measurement("test");
-        point.addTag("s", "Kun");
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode matrix = mapper.readValue(node, JsonNode.class);
+
+        Point point = Point.measurement(measurementName);
+        point.addTag(tag,tag);
         point.time(Instant.now().toEpochMilli(), WritePrecision.MS);
 
-        node.fields().forEachRemaining(x -> parseJson(point,x.getKey(),x.getValue()));
-
+        matrix.forEach(jsonNode ->
+                jsonNode.fields().forEachRemaining(x -> {
+                    try {
+                        parseJson(point, x.getKey(), x.getValue());
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+        );
         writeApi.writePoint(point);
     }
 
-    private static void parseJson(Point point, String key , JsonNode node) {
+    private static void parseJson(Point point, String key, JsonNode node) throws JsonProcessingException {
         if (node.isObject()) {
             ObjectNode objectNode = (ObjectNode) node;
-            objectNode.fields().forEachRemaining(x -> parseJson(point,x.getKey(),x.getValue()));
+            objectNode.fields().forEachRemaining(x -> {
+                try {
+                    parseJson(point, key + "." + x.getKey(), x.getValue());
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         } else if (node.isArray()) {
-            ArrayNode arrayNode = (ArrayNode) node;
-            for (JsonNode jsonNode : arrayNode) {
-                jsonNode.fields().forEachRemaining(x -> parseJson(point,x.getKey(),x.getValue()));
-            }
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode matrix = mapper.readValue(node.toString(), JsonNode.class);
+            matrix.forEach(x -> x.fields().forEachRemaining(y -> {
+                try {
+                    parseJson(point, key + "." + y.getKey(), y.getValue());
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }));
         } else if (node.isTextual()) {
-            point.addField(key,node.asText());
+            point.addField(key, node.asText());
         } else if (node.isInt()) {
-            point.addField(key,node.asInt());
+            point.addField(key, node.asInt());
         } else if (node.isBoolean()) {
-            point.addField(key,node.asBoolean());
+            point.addField(key, node.asBoolean());
         } else if (node.isDouble()) {
-            point.addField(key,node.asDouble());
+            point.addField(key, node.asDouble());
         } else {
-            point.addField(key,node.asText());
+            point.addField(key, node.asText());
         }
     }
 
