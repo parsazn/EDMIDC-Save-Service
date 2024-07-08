@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Iterator;
+import java.util.Map;
 
 //https://stackoverflow.com/questions/41183756/inserting-list-as-value-in-influxdb
 @Service
@@ -33,50 +35,59 @@ public class SavingService {
         this.url = influxDBConfig.getUrl();
     }
 
-    public void save(String node , String tag , String measurementName) throws JsonProcessingException {
+    public void save(String node, String tag, String measurementName) throws JsonProcessingException {
 
         InfluxDBClient influxDBClient = InfluxDBClientFactory.create(url, token, org, bucket);
         WriteApiBlocking writeApi = influxDBClient.getWriteApiBlocking();
 
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode matrix = mapper.readValue(node, JsonNode.class);
+        JsonNode matrix = mapper.readTree(node);
 
         Point point = Point.measurement(measurementName);
-        point.addTag(tag,tag);
+        point.addTag(tag, tag);
         point.time(Instant.now().toEpochMilli(), WritePrecision.MS);
-
-        matrix.forEach(jsonNode ->
-                jsonNode.fields().forEachRemaining(x -> {
-                    try {
-                        parseJson(point, x.getKey(), x.getValue());
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-        );
+        if(matrix.isArray()){
+            for (JsonNode arrayNode : matrix) {
+                Iterator<Map.Entry<String, JsonNode>> fieldsIterator = arrayNode.fields();
+                while(fieldsIterator.hasNext()){
+                    Map.Entry<String, JsonNode> fields =fieldsIterator.next();
+                        parseJson(point,  fields.getKey(), fields.getValue());
+                }
+            }
+        }else {
+            Iterator<Map.Entry<String, JsonNode>> fields = matrix.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> next = fields.next();
+                parseJson(point, next.getKey(), next.getValue());
+            }
+        }
         writeApi.writePoint(point);
     }
 
     private static void parseJson(Point point, String key, JsonNode node) throws JsonProcessingException {
         if (node.isObject()) {
             ObjectNode objectNode = (ObjectNode) node;
-            objectNode.fields().forEachRemaining(x -> {
+            Iterator<Map.Entry<String, JsonNode>> fieldsIterator = objectNode.fields();
+            while(fieldsIterator.hasNext()){
+                Map.Entry<String, JsonNode> fields =fieldsIterator.next();
                 try {
-                    parseJson(point, key + "." + x.getKey(), x.getValue());
+                    parseJson(point, key + "." + fields.getKey(), fields.getValue());
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
-            });
+            }
         } else if (node.isArray()) {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode matrix = mapper.readValue(node.toString(), JsonNode.class);
-            matrix.forEach(x -> x.fields().forEachRemaining(y -> {
-                try {
-                    parseJson(point, key + "." + y.getKey(), y.getValue());
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
+            for (JsonNode arrayNode : node) {
+                Iterator<Map.Entry<String, JsonNode>> fieldsIterator = arrayNode.fields();
+                while(fieldsIterator.hasNext()){
+                    Map.Entry<String, JsonNode> fields =fieldsIterator.next();
+                    try {
+                        parseJson(point, key + "." + fields.getKey(), fields.getValue());
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
-            }));
+            }
         } else if (node.isTextual()) {
             point.addField(key, node.asText());
         } else if (node.isInt()) {
