@@ -11,27 +11,27 @@ services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+      - ZOOKEEPER_CLIENT_PORT=${ZOOKEEPER_CLIENT_PORT}
+      - ZOOKEEPER_TICK_TIME=${ZOOKEEPER_TICK_TIME}
     ports:
-      - 22181:2181
+      - ${ZOOKEEPER_PORT}:${ZOOKEEPER_CLIENT_PORT}
     networks:
       - my_network
-    container_name: zookeper
+    container_name: zookeeper
 
   kafka:
     image: confluentinc/cp-kafka:latest
     depends_on:
       - zookeeper
     ports:
-      - 29092:29092
+      - ${KAFKA_PORT}:29092
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      - KAFKA_BROKER_ID=${KAFKA_BROKER_ID}
+      - KAFKA_ZOOKEEPER_CONNECT=${KAFKA_ZOOKEEPER_CONNECT}
+      - KAFKA_ADVERTISED_LISTENERS=${KAFKA_ADVERTISED_LISTENERS}
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
+      - KAFKA_INTER_BROKER_LISTENER_NAME=${KAFKA_INTER_BROKER_LISTENER_NAME}
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
     networks:
       - my_network
     container_name: kafka
@@ -41,11 +41,11 @@ services:
     depends_on:
       - kafka
     ports:
-      - 8090:8080
+      - ${KAFKA_UI_PORT}:8080
     environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      - KAFKA_CLUSTERS_0_NAME=${KAFKA_CLUSTERS_0_NAME}
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=${KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS}
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=${KAFKA_CLUSTERS_0_ZOOKEEPER}
     networks:
       - my_network
     container_name: kafka-ui
@@ -53,7 +53,7 @@ services:
   prometheus:
     image: prom/prometheus:v2.44.0
     ports:
-      - 9090:9090
+      - ${PROMETHEUS_PORT}:9090
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
@@ -63,7 +63,7 @@ services:
   grafana:
     image: grafana/grafana:9.5.2
     ports:
-      - 3000:3000
+      - ${GRAFANA_PORT}:3000
     restart: unless-stopped
     volumes:
       - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
@@ -76,19 +76,19 @@ services:
     image: influxdb:2
     container_name: influxdb
     ports:
-      - "8086:8086"
+      - ${INFLUXDB_PORT}:8086
     volumes:
       - influxdb-data:/var/lib/influxdb2
       - ./config:/etc/influxdb2
     environment:
-      - DOCKER_INFLUXDB_INIT_MODE=setup
-      - DOCKER_INFLUXDB_INIT_USERNAME=my-user
-      - DOCKER_INFLUXDB_INIT_PASSWORD=my-password
-      - DOCKER_INFLUXDB_INIT_ORG=my-org
-      - DOCKER_INFLUXDB_INIT_BUCKET=my-bucket
-      - DOCKER_INFLUXDB_INIT_RETENTION=0
-      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-super-secret-auth-token
-      - DOCKER_INFLUXDB_INIT_CLI_CONFIG_NAME=myconfig
+      - DOCKER_INFLUXDB_INIT_MODE=${DOCKER_INFLUXDB_INIT_MODE}
+      - DOCKER_INFLUXDB_INIT_USERNAME=${DOCKER_INFLUXDB_INIT_USERNAME}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${DOCKER_INFLUXDB_INIT_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${DOCKER_INFLUXDB_INIT_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${DOCKER_INFLUXDB_INIT_BUCKET}
+      - DOCKER_INFLUXDB_INIT_RETENTION=${DOCKER_INFLUXDB_INIT_RETENTION}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${DOCKER_INFLUXDB_INIT_ADMIN_TOKEN}
+      - DOCKER_INFLUXDB_INIT_CLI_CONFIG_NAME=${DOCKER_INFLUXDB_INIT_CLI_CONFIG_NAME}
     healthcheck:
       test: [ "CMD", "curl", "-f" , "http://localhost:8086/ping" ]
       interval: 1m
@@ -102,11 +102,11 @@ services:
     image: postgres:14.1-alpine
     restart: always
     environment:
-      - POSTGRES_USER=edmidcUser
-      - POSTGRES_PASSWORD=edmidc
-      - POSTGRES_DB=heartbeatDB
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
-      - '5432:5432'
+      - ${POSTGRES_PORT}:5432
     volumes:
       - db:/var/lib/postgresql/data
     healthcheck:

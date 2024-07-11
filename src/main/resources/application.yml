@@ -4,15 +4,25 @@ spring:
     kafka:
         consumer:
             auto-offset-reset: earliest
-            bootstrap-servers: localhost:29092
-            group-id: group_iid
+            bootstrap-servers: localhost:${KAFKA_PORT}
+            group-id: group_id
             key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
             value-deserializer: org.apache.kafka.common.serialization.StringSerializer
-
-
-
-
-#    spring.influx.url=http://localhost:8086
-#    spring.influx.username=<YOUR_USERNAME>
-#    spring.influx.password=<YOUR_PASSWORD>
-#    spring.influx.database=<YOUR_DATABASE_NAME>
+        topics: ${KAFKA_TOPICS:edmidc-bitcoin-cdc;error-message-cdc}
+    influxdb:
+        config:
+            url: http://localhost:${INFLUXDB_PORT:8086}
+            token: ${DOCKER_INFLUXDB_INIT_ADMIN_TOKEN:my-super-secret-auth-token}
+            org: ${DOCKER_INFLUXDB_INIT_ORG:my-org}
+            bucket: ${DOCKER_INFLUXDB_INIT_BUCKET:my-bucket}
+management:
+    server:
+        port: ${SERVER_PORT:8080}
+    endpoints:
+        web:
+            exposure:
+                include: [ "prometheus" ]
+server:
+    port: ${SERVER_PORT:8080}
+    servlet:
+        context-path: /
