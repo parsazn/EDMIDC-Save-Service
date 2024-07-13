@@ -22,7 +22,6 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build Docker image
         run: |
-          TAG=${GITHUB_REF_NAME}
-          docker build -t edmidc-save-service:${TAG} .
-          docker tag edmidc-save-service:${TAG} parsazendehdel/edmidc-save-service:${TAG}
-          docker push parsazendehdel/edmidc-save-service:${TAG}
+          docker build -t edmidc-save-service .
+          docker tag edmidc-save-service parsazendehdel/edmidc-save-service
+          docker push parsazendehdel/edmidc-save-service
