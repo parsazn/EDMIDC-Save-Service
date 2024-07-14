@@ -20,7 +20,6 @@ import java.util.Map;
 
 @Service
 public class SavingService {
-
     private final char[] token;
     private final String org;
     private final String bucket;
