@@ -18,7 +18,7 @@ public class KafkaTopicConfig {
     @PostConstruct
     public void init() {
         // Split the kafkaTopics string by comma and trim any whitespace
-        topicsArray = Arrays.stream(topics.split(";"))
+        topicsArray = Arrays.stream(topics.split(","))
                 .map(String::trim)
                 .toArray(String[]::new);
     }
