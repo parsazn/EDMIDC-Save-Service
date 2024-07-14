@@ -21,7 +21,7 @@ public class KafkaConsumerConfig {
         Map<String, Object> props = new HashMap<>();
         props.put(
                 ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                "localhost:29092");
+                "${spring.kafka.producer.bootstrap-servers}");
         props.put(
                 ConsumerConfig.GROUP_ID_CONFIG,
                 "group_id");
