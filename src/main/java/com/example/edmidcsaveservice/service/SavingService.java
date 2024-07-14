@@ -18,7 +18,6 @@ import java.time.Instant;
 import java.util.Iterator;
 import java.util.Map;
 
-//https://stackoverflow.com/questions/41183756/inserting-list-as-value-in-influxdb
 @Service
 public class SavingService {
 
