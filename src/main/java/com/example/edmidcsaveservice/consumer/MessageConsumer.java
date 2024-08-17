@@ -10,6 +10,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Date;
 
 @Component
 public class MessageConsumer {
@@ -33,7 +34,8 @@ public class MessageConsumer {
             System.out.println("HashMap: " + message);
             String measurementName = matrix.get("measurementName").asText();
             String tag = matrix.get("tag").asText();
-            savingService.save(matrix.get("result").toString(), tag, measurementName);
+            long created = matrix.get("created").asLong(new Date().getTime());
+            savingService.save(matrix.get("result").toString(), tag, measurementName, created);
         } catch (IOException e) {
             throw new RuntimeException("Unable to consumer message : " + message + "\n due to : " + e);
         }

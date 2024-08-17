@@ -14,7 +14,6 @@ import com.influxdb.client.write.Point;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -33,7 +32,7 @@ public class SavingService {
         this.url = influxDBConfig.getUrl();
     }
 
-    public void save(String node, String tag, String measurementName) throws JsonProcessingException {
+    public void save(String node, String tag, String measurementName, long created) throws JsonProcessingException {
 
         InfluxDBClient influxDBClient = InfluxDBClientFactory.create(url, token, org, bucket);
         WriteApiBlocking writeApi = influxDBClient.getWriteApiBlocking();
@@ -43,7 +42,7 @@ public class SavingService {
 
         Point point = Point.measurement(measurementName);
         point.addTag(tag, tag);
-        point.time(Instant.now().toEpochMilli(), WritePrecision.MS);
+        point.time(created, WritePrecision.MS);
         if(matrix.isArray()){
             for (JsonNode arrayNode : matrix) {
                 Iterator<Map.Entry<String, JsonNode>> fieldsIterator = arrayNode.fields();

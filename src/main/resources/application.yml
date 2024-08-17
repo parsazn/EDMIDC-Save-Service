@@ -3,7 +3,8 @@ spring:
         name: EDMIDC-Save-Service
     kafka:
         consumer:
-            auto-offset-reset: earliest
+            auto-offset-reset: latest
+            enable-auto-commit: true
             bootstrap-servers: ${KAFKA_BOOTSTRAP_URL:localhost:29092}
             group-id: ${GROUP_ID:group_id}
             key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
